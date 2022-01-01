@@ -282,8 +282,6 @@ class PatchDialog(DialogWindow):
                     readme = bass.dirs['saveBase'].join(readme.stail)
             readme_html = readme.root + u'.html'
             shown_log = readme_html if balt.web_viewer_available() else readme
-            for bp_file in bp_files_to_save:
-                bp_file.fileInfo.set_table_prop('doc', readme_html)
             balt.playSound(self.parent, bass.inisettings['SoundSuccess'])
             balt.show_log(self.parent, shown_log, patch_name, wrye_log=True,
                           asDialog=True)
@@ -300,6 +298,7 @@ class PatchDialog(DialogWindow):
                     # calculate_crc() would not detect the crc change. That's a
                     # general problem with crc cache - API limits
                     info.calculate_crc(recalculate=True)
+                info.set_table_prop('doc', readme_html)
                 self._bps.append(bp_fname)
         except CancelError:
             pass
