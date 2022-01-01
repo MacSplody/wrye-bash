@@ -460,8 +460,8 @@ def _parse_bash_ini(bash_ini_path):
         for ci_ini_key, value_tup in section_values.items():
             if not value_tup or not (value := value_tup[0]): continue
             # [1:] to chop off the leading 's' in e.g. 'sBashModData'
-            ci_ini_dict_key = ci_ini_key[1:]
-            if default := section_defaults.get(ci_ini_dict_key.lower()):
+            ini_dict_key_lo = ci_ini_key[1:].lower()
+            if default := section_defaults.get(ini_dict_key_lo):
                 ini_settings_key, default_value = default
                 if type(default_value) is bool:
                     # Based on ConfigParser.getboolean's behavior
@@ -473,15 +473,8 @@ def _parse_bash_ini(bash_ini_path):
                 ##:(570) provisional - we want to stop specifying tool paths
                 # in the ini but we need some UI for that.
                 # Stash all settings in here in case they match tool path keys.
-                # Unfortunately, finding the right casing of the INI tool key
-                # is a bit involved
-                found_tool_ini_key = None
-                for tool_ini_key in bass.inisettings:
-                    if tool_ini_key == ci_ini_dict_key:
-                        found_tool_ini_key = tool_ini_key
-                        break
-                if found_tool_ini_key:
-                    bass.inisettings[found_tool_ini_key] = value
+                # Those are queried in lower case
+                bass.inisettings[ini_dict_key_lo] = value
 
 # Main ------------------------------------------------------------------------
 def main(opts):
