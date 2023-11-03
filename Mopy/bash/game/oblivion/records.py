@@ -52,7 +52,7 @@ from ...brec import FID, AMelItems, AMelLLItems, AMreActor, AMreCell, \
     PackGeneralOldFlags, MelPackScheduleOld, AMreRegn, MelColor, \
     MelWorldspace, MelRegnAreas, MelRegnRdat, MelRegnEntryObjects, \
     MelRegnEntrySoundsOld, MelRegnEntryWeatherTypes, MelRegnEntryGrasses, \
-    MelRegnEntryMapName
+    MelRegnEntryMapName, AMreEyes, MelEyesFlags
 
 #------------------------------------------------------------------------------
 # Record Elements -------------------------------------------------------------
@@ -1103,6 +1103,16 @@ class MreEnch(MreHasEffects, MelRecord):
         MelEffectsTes4(),
         MelEffectsTes4ObmeFull(),
     ).with_distributor(_effects_distributor)
+
+#------------------------------------------------------------------------------
+class MreEyes(AMreEyes):
+    """Eyes."""
+    melSet = MelSet(
+        MelEdid(),
+        MelFull(),
+        MelIcon(is_required=True),
+        MelEyesFlags(),
+    )
 
 #------------------------------------------------------------------------------
 class MreFact(MelRecord):
