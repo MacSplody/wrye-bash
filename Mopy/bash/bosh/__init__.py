@@ -2085,13 +2085,6 @@ def _lo_cache(lord_func):
             self._active_wip = list(load_order.cached_active_tuple())
     return _modinfos_cache_wrapper
 
-def _bsas_from_ini(bsa_ini, bsa_key, available_bsas):
-    """Helper method for _get__bsas_from_ini. Retrieves BSA paths from an
-    INI file."""
-    r_bsas = (x.strip() for x in
-              bsa_ini.getSetting(u'Archive', bsa_key, u'').split(u','))
-    return (available_bsas[b] for b in r_bsas if b in available_bsas)
-
 #------------------------------------------------------------------------------
 class ModInfos(TableFileInfos):
     """Collection of modinfos. Represents mods in the Data directory."""
@@ -2404,8 +2397,10 @@ class ModInfos(TableFileInfos):
         # missing them (=CTD). For Skyrim you need to have a valid load order
         oldBad = self.missing_strings
         # Determine BSA LO from INIs once, this gets expensive very quickly
-        available_bsas, self.__bsa_lo, self.__bsa_cause = \
-            self._get_bsas_from_inis()
+        # We'll be removing BSAs from here once we've given them a position
+        available_bsas = FNDict(bsaInfos.items())
+        self.__bsa_lo, self.__bsa_cause = self.get_bsas_from_inis(available_bsas,
+                                                    self.plugin_inis.values())
         self.__available_bsas = available_bsas.copy() # cache for get_bsa_lo
         self.__calculate_bsa_lo = True # reset the cache
         # Determine the present strings files once to avoid stat'ing
@@ -3054,47 +3049,39 @@ class ModInfos(TableFileInfos):
                 return FName(modName)
         return None
 
-    def _get_bsas_from_inis(self):
-        """Retrieves BSA load order from INI files. This is separate so that we
-        can cache it during early boot for massive speedups. The real solution
-        to this is a full BSA LO cache though - see #233 as well."""
-        # We'll be removing BSAs from here once we've given them a position
-        available_bsas = FNDict(bsaInfos.items())
-        bsa_lo = OrderedDict() # Final load order, -1 means it came from an INI
+    def get_bsas_from_inis(self, available_bsas, ini_files_cached):
+        # INI loaded bsas load order indexes - in the vicinity of ±sys.maxsize
+        bsa_lo = {}
         bsa_cause = {} # Reason each BSA was loaded
-        # BSAs from INI files load first
-        ini_idx = -sys.maxsize - 1 # Make sure they come first
-        ini_files_cached = self.plugin_inis.values()
-        for ini_k in bush.game.Ini.resource_archives_keys:
-            for ini_f in ini_files_cached:
-                if ini_f.has_setting(u'Archive', ini_k):
-                    for binf in _bsas_from_ini(ini_f, ini_k, available_bsas):
-                        bsa_lo[binf] = ini_idx
-                        bsa_cause[binf] = f'{ini_f.abs_path.stail} ({ini_k})'
-                        ini_idx += 1
-                        del available_bsas[binf.fn_key]
-                    break # The first INI with the key wins ##: Test this
-        # Some games have INI settings that override all other BSAs
-        ini_idx = sys.maxsize # Make sure they come last
-        res_ov_key = bush.game.Ini.resource_override_key
-        if res_ov_key:
-            # Start out with the defaults set by the engine
-            res_ov_bsas = [available_bsas[b] for b in
-                           bush.game.Ini.resource_override_defaults]
-            res_ov_cause = f'{bush.game.Ini.dropdown_inis[0]} ({res_ov_key})'
-            # Then look if any INIs overwrite them
-            for ini_f in ini_files_cached:
-                if ini_f.has_setting(u'Archive', res_ov_key):
-                    res_ov_bsas = _bsas_from_ini(
-                        ini_f, res_ov_key, available_bsas)
-                    res_ov_cause = f'{ini_f.abs_path.stail} ({res_ov_key})'
-                    break # The first INI with the key wins ##: Test this
-            for binf in res_ov_bsas:
-                bsa_lo[binf] = ini_idx
-                bsa_cause[binf] = res_ov_cause
-                ini_idx -= 1
-                del available_bsas[binf.fn_key]
-        return available_bsas, bsa_lo, bsa_cause
+        cls = bush.game.Ini
+        start_dex_keys = {
+            # BSAs from INI files load first so make sure they come first by
+            # assigning negative indexes
+            -sys.maxsize - 1: cls.resource_archives_keys,
+            # Some games have INI settings that override all other BSAs,
+            # make sure they come last
+            sys.maxsize: [cls.resource_override_key], }
+        for group_dex, (ini_idx, keys) in enumerate(start_dex_keys.items()):
+            bsas_cause = []
+            for ini_k in keys:
+                for ini_f in ini_files_cached:
+                    if bsas := ini_f.getSetting('Archive', ini_k, ''):
+                        bsas = (x.strip() for x in bsas.split(','))
+                        bsas_cause.append(((available_bsas[b] for b in bsas if
+                            b in available_bsas),
+                            f'{ini_f.abs_path.stail} ({ini_k})'))
+                        break  # The first INI with the key wins ##: Test this
+            if not bsas_cause and group_dex == 1:
+                bsas_cause = ([ # fallback to the defaults set by the engine
+                    available_bsas[b] for b in cls.resource_override_defaults],
+                    f'{cls.dropdown_inis[0]} ({keys[0]})'),
+            for res_ov_bsas, res_ov_cause in bsas_cause:
+                for binf in res_ov_bsas:
+                    bsa_lo[binf] = ini_idx
+                    bsa_cause[binf] = res_ov_cause
+                    ini_idx -= -1 if ini_idx < 0 else 1
+                    del available_bsas[binf.fn_key]
+        return bsa_lo, bsa_cause
 
     # TODO(inf): Morrowind does not have attached BSAs, there is instead a
     #  'second load order' of BSAs in the INI
