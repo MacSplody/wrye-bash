@@ -40,7 +40,7 @@ from zlib import crc32
 
 from . import DataStore, InstallerConverter, ModInfos, bain_image_exts, \
     best_ini_files, data_tracking_stores, RefrData, Corrupted
-from .. import archives, bass, bolt, bush, env, load_order
+from .. import archives, bass, bolt, bush, env
 from ..archives import compress7z, defaultExt, extract7z, list_archive, \
     readExts
 from ..bass import Store
@@ -1805,10 +1805,11 @@ class InstallersData(DataStore):
     file_pattern = re.compile(
         fr'\.(?:{"|".join(e[1:] for e in archives.readExts)})$', re.I)
     unique_store_key = Store.INSTALLERS
+    _dir_key = 'installers'
 
     def __init__(self):
+        self.set_store_dir()
         super().__init__()
-        self.store_dir = bass.dirs['installers']
         self.bash_dir.makedirs()
         #--Persistent data
         self.dictFile = bolt.PickleDict(self.bash_dir.join(u'Installers.dat'))
@@ -1940,7 +1941,7 @@ class InstallersData(DataStore):
         if 'C' in what or changes:
             self.converters_data.refreshConverters(progress, fullRefresh)
         #--Done
-        if changes: self.hasChanged = True
+        if changes: self.hasChanged = True # todo use refresh_info here?
         return refresh_info
 
     def refresh_ns(self, *args, **kwargs):
@@ -1971,7 +1972,7 @@ class InstallersData(DataStore):
         self.loaded = True
         return True
 
-    def save(self):
+    def save_pickle(self):
         """Saves to pickle file."""
         if self.hasChanged:
             self.dictFile.pickled_data[u'installers'] = self._data
@@ -2017,8 +2018,8 @@ class InstallersData(DataStore):
         if check_existence:
             del_insts = {i for i in del_insts if not i.abs_path.exists()}
         if del_insts: # markers are popped in _delete_operation
-            self.irefresh(what='I',
-                          refresh_info=RefrData({i.fn_key for i in del_insts}))
+            self.irefresh(what='I', refresh_info=RefrData({
+                i.fn_key for i in del_insts}))
         elif markers:
             self.refreshOrder()
 
@@ -2826,7 +2827,7 @@ class InstallersData(DataStore):
                             if store.tracks_ownership:
                                 store_info.set_table_prop(
                                     'installer', f'{ikey}')
-                            refresh_ui[store.unique_store_key] = True
+                            refresh_ui[store.unique_store_key] = True ## todo refreshdata
                             # Each file may only belong to one data store
                             break
         finally:
@@ -3097,8 +3098,7 @@ class InstallersData(DataStore):
             u'bash.installers.conflictsReport.showBSAConflicts']
         ##: Add support for showing inactive & excluding lower BSAs
         if include_bsas: # get the load order of all active BSAs
-            active_bsas, bsa_cause = modInfos.get_bsa_lo(
-                load_order.cached_active_tuple())
+            active_bsas, bsa_cause = modInfos.get_bsa_lo()
         else:
             active_bsas, bsa_cause = None, None
         lower_loose, higher_loose, lower_bsa, higher_bsa = self.find_conflicts(
