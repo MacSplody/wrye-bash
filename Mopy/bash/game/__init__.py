@@ -429,6 +429,22 @@ class GameInfo(object):
         # skipped entirely.
         valid_versions = set()
 
+        # Heuristics for str_bsa_sort_key.
+        _str_heuristics = tuple(enumerate(('main', 'interface')))
+        @classmethod
+        def heuristic_sort(cls, bsa_body_lo, plugin_prefix):
+            """Heuristics used are:
+                - sort BSAs that begin with the body of this plugin before
+                others. Avoids parsing vanilla BSAs for third party plugins
+                - sort 'main', 'patch' and 'interface' to the front in each
+                group. Avoids parsing expensive BSAs at startup for the game
+                master (e.g. Skyrim.esm -> Skyrim - Textures0.bsa)."""
+            startsw = not bsa_body_lo.startswith(plugin_prefix)
+            for i, h in cls._str_heuristics:
+                if h in bsa_body_lo:
+                    return startsw, i
+            return startsw, i + 1
+
     class Psc(object):
         """Information about script sources (only Papyrus right now) for this
         game."""

@@ -948,7 +948,7 @@ class ModInfo(FileInfo):
         # give priority to the heuristic sort key then to the inverse of the
         # actual bsa lo (so try and load strings from the bsas loading last)
         self.str_bsas_sorted = sorted(ret_bsas, key=lambda binf:
-            (*binf.str_bsa_sort_key(plugin_prefix), -ret_bsas[binf]))
+            binf.str_bsa_sort_key(plugin_prefix, bush.game.Bsa, ret_bsas))
         for assetPath in self._string_files_paths(i_lang):
             # Check loose files first
             if assetPath.lower() in ci_cached_strings_paths:
