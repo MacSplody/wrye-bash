@@ -197,7 +197,7 @@ class Saves_Profiles(ChoiceLink):
             arcSaves = bosh.saveInfos.localSave
             new_dir = self.relativePath
             with BusyCursor():
-                self.window.set_local_save(new_dir, do_swap=askYes)
+                self.window.set_local_save(new_dir, do_swap=self._askYes)
                 self.window.DeleteAll() # let call below repopulate
                 self.window.RefreshUI(detail_item=None,
                                       refresh_others=Store.MODS.DO())
