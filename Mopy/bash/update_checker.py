@@ -43,7 +43,7 @@ try:
 except ImportError as e:
     deprint(f'requests not installed, update checking functionality will not '
             f'be available (error: {e})')
-    ARestHandler = None
+    ARestHandler = object
     can_check_updates = False
 
 # This won't work if packaging isn't installed - in that case, we simply have
@@ -128,10 +128,11 @@ class _GitHub(ARestHandler):
     core_used: int | None
 
     def __init__(self):
-        super().__init__(extra_headers={
-            'accept': 'application/vnd.github+json',
-            'x-github-api-version': _GITHUB_API_VERSION,
-        })
+        if can_check_updates:
+            super().__init__(extra_headers={
+                'accept': 'application/vnd.github+json',
+                'x-github-api-version': _GITHUB_API_VERSION,
+            })
         # Rate limiting information - set to None (= unknown) by default
         self.core_limit = None
         self.core_remaining = None
@@ -216,6 +217,7 @@ class UpdateChecker:
     accessed."""
     def __init__(self):
         self._gh_api = _GitHub()
+
 
     # Internal API ------------------------------------------------------------
     def _get_latest_version(self) -> LatestVersion | None:
