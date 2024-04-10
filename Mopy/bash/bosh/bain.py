@@ -64,19 +64,17 @@ def _remove_empty_dirs(root_dir):
     root_dir, folders, files = next(os.walk(root_dir))
     if not files and not folders:
         return True # empty
-    possible_empty = []
+    empty_dirs = []
     if folders:
         # root_dir should be an absolute path
         root_gpath = GPath_no_norm(root_dir)
         for fol in folders:
             if _remove_empty_dirs(fol_abs := root_gpath.join(fol)):
-                possible_empty.append(fol_abs)
+                empty_dirs.append(fol_abs)
             else: files = True
-    if files:
-        for empty in possible_empty:
-            empty.removedirs()
-        return False
-    return True
+    for empty in empty_dirs:
+        empty.removedirs()
+    return not files
 
 def _scandir_walk(apath, *, __root_len=None, __folders_times=None):
     """Recursively walk the project dir - only used in InstallerProject."""
