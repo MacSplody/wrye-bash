@@ -302,12 +302,12 @@ class FileInfo(_TabledInfo, AFileInfo):
 
     # Backup stuff - beta, see #292 -------------------------------------------
     def get_hide_dir(self):
-        return self.get_store().hidden_dir
+        return self._store().hidden_dir
 
     def makeBackup(self, forceBackup=False):
         """Creates backup(s) of file."""
         #--Skip backup?
-        if self not in self.get_store().values(): return
+        if self not in self._store().values(): return
         if self.madeBackup and not forceBackup: return
         #--Backup
         self.copy_to(self.backup_dir.join(self.fn_key))
@@ -324,7 +324,7 @@ class FileInfo(_TabledInfo, AFileInfo):
         for fname mapped to its restore location in data_store.store_dir
         :rtype: list[tuple]
         """
-        restore_path = (fname and self.get_store().store_dir.join(
+        restore_path = (fname and self._store().store_dir.join(
             fname)) or self.abs_path
         fname = fname or self.fn_key
         return [(self.backup_dir.join(fname) + (u'f' if first else u''),
@@ -355,8 +355,7 @@ class FileInfo(_TabledInfo, AFileInfo):
         # half-baked anyway let's agree for now that BPs remain BPs with the
         # same config as before - if not, manually run a mergeability scan
         # after updating the config (in case the restored file is a BP)
-        self.get_store().new_info(self.fn_key, notify_bain=True,
-            _in_refresh=True)
+        self._store().new_info(self.fn_key, notify_bain=True, _in_refresh=True)
 
     def getNextSnapshot(self):
         """Returns parameters for next snapshot."""
@@ -389,11 +388,11 @@ class FileInfo(_TabledInfo, AFileInfo):
 
     @property
     def backup_dir(self):
-        return self.get_store().bash_dir.join(u'Backups')
+        return self._store().bash_dir.join('Backups')
 
     @property
     def snapshot_dir(self):
-        return self.get_store().bash_dir.join(u'Snapshots')
+        return self._store().bash_dir.join('Snapshots')
 
     def delete_paths(self): # will include cosave ones
         return *super().delete_paths(), *self.all_backup_paths()
@@ -436,7 +435,7 @@ class ModInfo(FileInfo):
         super().__init__(fullpath, load_cache)
 
     def get_hide_dir(self):
-        dest_dir = self.get_store().hidden_dir
+        dest_dir = self._store().hidden_dir
         #--Use author subdirectory instead?
         mod_author = self.header.author
         if mod_author:
@@ -463,7 +462,7 @@ class ModInfo(FileInfo):
             self._recalc_esm()
 
     @classmethod
-    def get_store(cls): return modInfos
+    def _store(cls): return modInfos
 
     def get_extension(self):
         """Returns the file extension of this mod."""
@@ -682,7 +681,7 @@ class ModInfo(FileInfo):
         self._reset_cache((self.fsize, self.ftime, self.ctime),
                           load_cache=False)
         # This is necessary if BAIN externally tracked the (un)ghosted file
-        self.get_store()._notify_bain(renamed={ghost_source: ghost_target})
+        self._store()._notify_bain(renamed={ghost_source: ghost_target})
         return True
 
     #--Bash Tags --------------------------------------------------------------
@@ -1026,7 +1025,7 @@ class ModInfo(FileInfo):
 
     def _fs_copy(self, dup_path, *, set_time=None):
         destDir, destName = dup_path.head, dup_path.stail
-        if destDir == (st := self.get_store()).store_dir and destName in st:
+        if destDir == (st := self._store()()).store_dir and destName in st:
             dup_path = st[destName].abs_path # used the (possibly) ghosted path
         super()._fs_copy(dup_path, set_time=set_time)
 
@@ -1123,7 +1122,7 @@ class AINIInfo(_TabledInfo, AIniInfo):
     _key_to_attr = {'installer': 'ini_owner_inst'}
 
     @classmethod
-    def get_store(cls): return iniInfos
+    def _store(cls): return iniInfos
 
     def tweak_status(self, target_ini_settings=None):
         if self._status is None:
@@ -1266,7 +1265,7 @@ class SaveInfo(FileInfo):
         super().__init__(fullpath, load_cache, **kwargs)
 
     @classmethod
-    def get_store(cls): return saveInfos
+    def _store(cls): return saveInfos
 
     def _masters_order_status(self, status):
         self.masterOrder = tuple(load_order.get_ordered(self.masterNames))
@@ -1463,7 +1462,7 @@ class ScreenInfo(AFileInfo):
         super()._reset_cache(stat_tuple, **kwargs)
 
     @classmethod
-    def get_store(cls): return screen_infos
+    def _store(cls): return screen_infos
 
     def validate_name(self, name_str, check_store=True):
         file_root, num_str = super().validate_name(name_str, check_store)
@@ -1827,7 +1826,7 @@ class DefaultIniInfo(AINIInfo):
 
     def _fs_copy(self, cp_dest_path, **kwargs):
         # Default tweak, so the file doesn't actually exist
-        self.get_store()._copy_to_new_tweak(self, FName(cp_dest_path.stail))
+        self._store()._copy_to_new_tweak(self, FName(cp_dest_path.stail))
 
 # noinspection PyUnusedLocal
 def ini_info_factory(fullpath, **kwargs) -> INIInfo:
@@ -3402,7 +3401,7 @@ class BSAInfos(TableFileInfos):
             _key_to_attr = {'info': 'bsa_notes'}
 
             @classmethod
-            def get_store(cls): return bsaInfos
+            def _store(cls): return bsaInfos
 
             def do_update(self, raise_on_error=False, **kwargs):
                 did_change = super(BSAInfo, self).do_update(raise_on_error)
