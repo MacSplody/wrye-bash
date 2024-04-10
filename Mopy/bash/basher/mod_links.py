@@ -2414,7 +2414,6 @@ class Mod_Snapshot(ItemLink):
     def Execute(self):
         for fileName, fileInfo in self.iselected_pairs():
             destDir, destName, wildcard = fileInfo.getNextSnapshot()
-            destDir.makedirs()
             if len(self.selected) == 1:
                 destPath = self._askSave(
                     title=_('Save snapshot as:'), defaultDir=destDir,
@@ -2453,10 +2452,8 @@ class Mod_RevertToSnapshot(OneItemLink):
         """Revert to Snapshot."""
         fileName = self._selected_item
         #--Snapshot finder
-        srcDir = self._selected_info.snapshot_dir
-        wildcard = self._selected_info.getNextSnapshot()[2]
+        srcDir, _destName, wildcard = self._selected_info.getNextSnapshot()
         #--File dialog
-        srcDir.makedirs()
         snapPath = self._askOpen(_('Revert %(target_file_name)s to '
                                    'snapshot:') % {
             'target_file_name': fileName}, defaultDir=srcDir,

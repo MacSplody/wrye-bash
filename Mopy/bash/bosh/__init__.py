@@ -1029,14 +1029,14 @@ class ModInfo(FileInfo):
 
     def getNextSnapshot(self):
         """Returns parameters for next snapshot."""
-        destDir = self.snapshot_dir
-        destDir.makedirs()
+        snapshot_dir = self._store().bash_dir.join('Snapshots')
+        snapshot_dir.makedirs()
         root, ext = self.fn_key.fn_body, self.fn_key.fn_ext
-        separator = u'-'
-        snapLast = [u'00']
+        separator = '-'
+        snapLast = ['00']
         #--Look for old snapshots.
         reSnap = re.compile(f'^{root}[ -]([0-9.]*[0-9]+){ext}$')
-        for fileName in destDir.ilist():
+        for fileName in snapshot_dir.ilist():
             maSnap = reSnap.match(fileName)
             if not maSnap: continue
             snapNew = maSnap.group(1).split(u'.')
@@ -1052,13 +1052,9 @@ class ModInfo(FileInfo):
                 snapLast = snapNew
                 continue
         #--New
-        snapLast[-1] = (u'%0'+str(len(snapLast[-1]))+u'd') % (int(snapLast[-1])+1,)
-        destName = root+separator+(u'.'.join(snapLast))+ext
-        return destDir, destName, f'{root}*{ext}'
-
-    @property
-    def snapshot_dir(self):
-        return self._store().bash_dir.join('Snapshots')
+        snapLast[-1] = f'%0{len(snapLast[-1])}d' % (int(snapLast[-1]) + 1)
+        destName = root+separator+('.'.join(snapLast))+ext
+        return snapshot_dir, destName, f'{root}*{ext}'
 
 #------------------------------------------------------------------------------
 def get_game_ini(ini_path, is_abs=True):
