@@ -992,7 +992,7 @@ class ModInfo(FileInfo):
 
     def _fs_copy(self, dup_path, *, set_time=None):
         destDir, destName = dup_path.head, dup_path.stail
-        if destDir == (st := self._store()()).store_dir and destName in st:
+        if destDir == (st := self._store()).store_dir and destName in st:
             dup_path = st[destName].abs_path # used the (possibly) ghosted path
         super()._fs_copy(dup_path, set_time=set_time)
 
