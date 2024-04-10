@@ -357,42 +357,9 @@ class FileInfo(_TabledInfo, AFileInfo):
         # after updating the config (in case the restored file is a BP)
         self._store().new_info(self.fn_key, notify_bain=True, _in_refresh=True)
 
-    def getNextSnapshot(self):
-        """Returns parameters for next snapshot."""
-        destDir = self.snapshot_dir
-        destDir.makedirs()
-        root, ext = self.fn_key.fn_body, self.fn_key.fn_ext
-        separator = u'-'
-        snapLast = [u'00']
-        #--Look for old snapshots.
-        reSnap = re.compile(f'^{root}[ -]([0-9.]*[0-9]+){ext}$')
-        for fileName in destDir.ilist():
-            maSnap = reSnap.match(fileName)
-            if not maSnap: continue
-            snapNew = maSnap.group(1).split(u'.')
-            #--Compare shared version numbers
-            sharedNums = min(len(snapNew),len(snapLast))
-            for index in range(sharedNums):
-                (numNew,numLast) = (int(snapNew[index]),int(snapLast[index]))
-                if numNew > numLast:
-                    snapLast = snapNew
-                    continue
-            #--Compare length of numbers
-            if len(snapNew) > len(snapLast):
-                snapLast = snapNew
-                continue
-        #--New
-        snapLast[-1] = (u'%0'+str(len(snapLast[-1]))+u'd') % (int(snapLast[-1])+1,)
-        destName = root+separator+(u'.'.join(snapLast))+ext
-        return destDir, destName, f'{root}*{ext}'
-
     @property
     def backup_dir(self):
         return self._store().bash_dir.join('Backups')
-
-    @property
-    def snapshot_dir(self):
-        return self._store().bash_dir.join('Snapshots')
 
     def delete_paths(self): # will include cosave ones
         return *super().delete_paths(), *self.all_backup_paths()
@@ -1059,6 +1026,39 @@ class ModInfo(FileInfo):
         return msg % {
             'assoc_bsa_name': assoc_bsa,
             'pnd_example': os.path.join('Sound', 'Voice', self.fn_key)}
+
+    def getNextSnapshot(self):
+        """Returns parameters for next snapshot."""
+        destDir = self.snapshot_dir
+        destDir.makedirs()
+        root, ext = self.fn_key.fn_body, self.fn_key.fn_ext
+        separator = u'-'
+        snapLast = [u'00']
+        #--Look for old snapshots.
+        reSnap = re.compile(f'^{root}[ -]([0-9.]*[0-9]+){ext}$')
+        for fileName in destDir.ilist():
+            maSnap = reSnap.match(fileName)
+            if not maSnap: continue
+            snapNew = maSnap.group(1).split(u'.')
+            #--Compare shared version numbers
+            sharedNums = min(len(snapNew),len(snapLast))
+            for index in range(sharedNums):
+                (numNew,numLast) = (int(snapNew[index]),int(snapLast[index]))
+                if numNew > numLast:
+                    snapLast = snapNew
+                    continue
+            #--Compare length of numbers
+            if len(snapNew) > len(snapLast):
+                snapLast = snapNew
+                continue
+        #--New
+        snapLast[-1] = (u'%0'+str(len(snapLast[-1]))+u'd') % (int(snapLast[-1])+1,)
+        destName = root+separator+(u'.'.join(snapLast))+ext
+        return destDir, destName, f'{root}*{ext}'
+
+    @property
+    def snapshot_dir(self):
+        return self._store().bash_dir.join('Snapshots')
 
 #------------------------------------------------------------------------------
 def get_game_ini(ini_path, is_abs=True):
