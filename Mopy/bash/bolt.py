@@ -1726,7 +1726,8 @@ class AFile(object):
 
 #------------------------------------------------------------------------------
 class ListInfo:
-    """Info object displayed in Wrye Bash list."""
+    """Info object displayed in Wrye Bash list - comes last in MI (*above*
+    Afile)."""
     __slots__ = ('fn_key', )
     _valid_exts_re = ''
     _is_filename = True
