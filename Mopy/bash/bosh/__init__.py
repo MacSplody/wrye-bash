@@ -317,7 +317,7 @@ class FileInfo(_TabledInfo, AFileInfo):
             self.copy_to(self.backup_dir.join(firstBackup.tail))
         self.madeBackup = True
 
-    def backup_restore_paths(self, first=False, fname=None):
+    def backup_restore_paths(self, first, fname=None):
         """Return a list of tuples, mapping backup paths to their restore
         destinations. If fname is not given returns the (first) backup
         filename corresponding to self.abs_path, else the backup filename
@@ -1348,9 +1348,9 @@ class SaveInfo(FileInfo):
                     abs(inst.abs_path.mtime - self.ftime) < 10]
         return u'\n'.join(co_ui_strings)
 
-    def backup_restore_paths(self, first=False, fname=None):
+    def backup_restore_paths(self, first, fname=None):
         """Return as parent and in addition back up paths for the cosaves."""
-        back_to_dest = super(SaveInfo, self).backup_restore_paths(first, fname)
+        back_to_dest = super().backup_restore_paths(first, fname)
         # see if we have cosave backups - we must delete cosaves when restoring
         # if the backup does not have a cosave
         for co_type in self.cosave_types:
@@ -1625,10 +1625,15 @@ class _AFileInfos(DataStore):
                             traceback=True)
                     self.pop(new, None)
             rdata.to_del = {d.fn_key for d in del_infos}
-        self.delete_refresh(del_infos, check_existence=False)
+            self.delete_refresh(del_infos, check_existence=False)
         if rdata.redraw:
             self._notify_bain(altered={self[n].abs_path for n in rdata.redraw})
         return rdata
+
+    #--Copy
+    def add_info(self, file_info, destName, **kwargs):
+        # TODO(ut) : in duplicate pass the info in and load_cache=False
+        return self.new_info(destName, notify_bain=True)
 
     def new_info(self, fileName, *, _in_refresh=False, owner=None,
                  notify_bain=False, **kwargs):
@@ -1722,11 +1727,6 @@ class _AFileInfos(DataStore):
         ren_keys, ren_paths = super().rename_operation(member_info, newName)
         self._notify_bain(renamed=ren_paths)
         return ren_keys, ren_paths
-
-    #--Copy
-    def add_info(self, file_info, destName, **kwargs):
-        # TODO(ut) : in duplicate pass the info in and load_cache=False
-        return self.new_info(destName, notify_bain=True)
 
 class TableFileInfos(_AFileInfos):
     tracks_ownership = True
