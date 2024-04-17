@@ -755,6 +755,7 @@ class AFallout3GameInfo(PatchGame):
         b'MISC': ('iconPath', 'smallIconPath', 'model'),
         b'MSTT': ('model',),
         b'NOTE': ('iconPath', 'smallIconPath', 'model', 'note_texture'),
+        b'NPC_': ('head_parts',),
         b'PERK': ('iconPath', 'smallIconPath'),
         b'PROJ': ('model', 'muzzle_flash_duration', 'proj_fade_duration',
                   'muzzle_flash_model'),

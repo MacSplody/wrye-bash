@@ -961,6 +961,7 @@ class ASkyrimGameInfo(PatchGame):
         b'LSCR': ('iconPath',),
         b'MGEF': ('dual_casting_scale',),
         b'MISC': ('iconPath', 'model'),
+        b'NPC_': ('head_parts',),
         b'PERK': ('iconPath',),
         b'PROJ': ('model', 'muzzle_flash_duration', 'proj_fade_duration',
                   'muzzle_flash_model'),
