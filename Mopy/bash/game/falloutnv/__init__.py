@@ -440,6 +440,7 @@ class _AFalloutNVGameInfo(AFallout3GameInfo):
                   'extraBlackjackTableModel', 'rouletteTableModel',
                   'slotReelTextures', 'blackjackDecks'),
         b'IMOD': ('iconPath', 'smallIconPath', 'model'),
+        b'NPC_': ('head_parts',),
         b'REPU': ('iconPath', 'smallIconPath'),
         b'WEAP': ('iconPath', 'smallIconPath', 'model', 'shellCasingModel',
                   'scopeModel', 'worldModel', 'modelWithMods',
